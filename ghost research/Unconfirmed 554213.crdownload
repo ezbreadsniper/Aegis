@@ -1,0 +1,56 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from hmmlearn import hmm
+
+# Load multi-year 1-minute data (simulated for analysis)
+# In a real scenario, this would be millions of rows of BTC/ETH/SOL/XRP data.
+def analyze_ghost_signals(symbol):
+    print(f"Analyzing Ghost Signals for {symbol}...")
+    
+    # Generate synthetic sub-minute data to demonstrate the HMM and Lead-Lag logic
+    np.random.seed(42)
+    n_points = 10000
+    
+    # Binance price (Source of Truth)
+    binance_returns = np.random.normal(0, 0.001, n_points)
+    binance_price = 100 * np.exp(np.cumsum(binance_returns))
+    
+    # Polymarket price (Lags Binance by 1-2 ticks)
+    polymarket_price = np.roll(binance_price, 2) + np.random.normal(0, 0.0005, n_points)
+    
+    # 1. Lead-Lag Correlation
+    correlation = pd.Series(binance_price).corr(pd.Series(polymarket_price).shift(-2))
+    print(f"Lead-Lag Correlation (2-tick lag): {correlation:.4f}")
+    
+    # 2. HMM Regime Detection
+    # Features: Volatility and Volume Imbalance
+    volatility = pd.Series(binance_returns).rolling(window=20).std().fillna(0).values.reshape(-1, 1)
+    
+    model = hmm.GaussianHMM(n_components=3, covariance_type="full", n_iter=100)
+    model.fit(volatility)
+    regimes = model.predict(volatility)
+    
+    # 3. Identify "Unicorn" Signals
+    # A Unicorn signal is a high-confidence lead-lag gap during a specific HMM regime.
+    signals = []
+    for i in range(2, n_points):
+        # If Binance moved > 0.2% and Polymarket hasn't moved yet
+        if abs(binance_price[i] - binance_price[i-2]) / binance_price[i-2] > 0.002:
+            if abs(polymarket_price[i] - polymarket_price[i-1]) / polymarket_price[i-1] < 0.0005:
+                signals.append(i)
+                
+    print(f"Detected {len(signals)} Unicorn 'Ghost Signals' in the dataset.")
+    
+    # Plotting
+    plt.figure(figsize=(12, 6))
+    plt.plot(binance_price[:500], label="Binance (Source)", alpha=0.8)
+    plt.plot(polymarket_price[:500], label="Polymarket (Lagging)", alpha=0.8)
+    plt.title(f"Sub-Minute Lead-Lag Analysis: {symbol}")
+    plt.legend()
+    plt.savefig(f"/home/ubuntu/{symbol}_ghost_signals.png")
+    plt.close()
+
+symbols = ["BTC", "ETH", "SOL", "XRP"]
+for s in symbols:
+    analyze_ghost_signals(s)

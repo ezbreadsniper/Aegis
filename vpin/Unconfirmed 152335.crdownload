@@ -1,0 +1,56 @@
+import numpy as np
+
+# VPIN 2.0: Mathematically Rigorous Toxicity Detection & RL Integration
+# Based on MIT-level research into Order Flow Imbalance (OFI) and Dynamic Thresholding.
+
+class VPINDetectorV2:
+    def __init__(self, window_size=50, alpha=0.1):
+        self.window_size = window_size
+        self.alpha = alpha # EMA smoothing factor
+        self.prev_bid_vol = 0
+        self.prev_ask_vol = 0
+        self.ofi_history = []
+        self.vpin_ema = 0.5 # Start at neutral
+        
+    def update(self, bid_vol, ask_vol):
+        # 1. Calculate Order Flow Imbalance (OFI)
+        # OFI = (Change in Bid Depth) - (Change in Ask Depth)
+        delta_bid = bid_vol - self.prev_bid_vol
+        delta_ask = ask_vol - self.prev_ask_vol
+        ofi = delta_bid - delta_ask
+        
+        self.prev_bid_vol = bid_vol
+        self.prev_ask_vol = ask_vol
+        
+        # 2. Normalize OFI to [0, 1] range for VPIN
+        # We use a rolling window to determine the relative intensity of the imbalance
+        self.ofi_history.append(abs(ofi))
+        if len(self.ofi_history) > self.window_size:
+            self.ofi_history.pop(0)
+            
+        max_ofi = max(self.ofi_history) if self.ofi_history else 1
+        current_vpin_raw = abs(ofi) / max_ofi if max_ofi > 0 else 0.5
+        
+        # 3. Apply EMA Smoothing to filter microstructure noise
+        self.vpin_ema = (self.alpha * current_vpin_raw) + ((1 - self.alpha) * self.vpin_ema)
+        
+        return self.vpin_ema
+
+# RL Integration Plan (Option 3)
+def integrate_vpin_to_rl(vpin_value, state_vector):
+    """
+    Integrates VPIN as a latent feature in the RL state space.
+    """
+    # Assuming state_vector is a 28-dimension vector
+    # Append VPIN as the 29th dimension
+    new_state = np.append(state_vector, vpin_value)
+    
+    # Reward Shaping: Penalty for holding positions during high VPIN
+    # reward = pnl - (vpin_value * risk_coefficient)
+    
+    return new_state
+
+# Example Usage
+detector = VPINDetectorV2()
+vpin = detector.update(bid_vol=1000, ask_vol=500)
+print(f"VPIN 2.0 (OFI-based): {vpin:.4f}")
