@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RL TRAINING TERMINAL</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            color: #cccccc;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            min-height: 100vh;
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        .header {
+            border-bottom: 1px solid #333;
+            padding: 10px 0;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #00ff00;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: normal;
+        }
+
+        .status-badge {
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 2px 8px;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .status-badge.updating {
+            background: #00ff00;
+            color: #000;
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 1px;
+            background: #333;
+            /* For grid lines */
+            border: 1px solid #333;
+            margin-bottom: 15px;
+        }
+
+        .stat-card {
+            background: #050505;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 10px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            color: #fff;
+        }
+
+        .stat-value.positive {
+            color: #00ff00;
+        }
+
+        .stat-value.negative {
+            color: #ff0000;
+        }
+
+        .stat-value.neutral {
+            color: #00ccff;
+        }
+
+        .stat-value.alert {
+            color: #ff9500;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: #333;
+            border: 1px solid #333;
+        }
+
+        .chart-card {
+            background: #050505;
+            padding: 10px;
+            height: 220px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #1a1a1a;
+            padding-bottom: 5px;
+        }
+
+        .chart-title {
+            color: #888;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .chart-value {
+            color: #00ff00;
+            font-size: 11px;
+        }
+
+        .chart-container {
+            height: 180px;
+            width: 100%;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        @media (max-width: 1400px) {
+            .charts-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .stats-bar {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>RL_TRAINING_TERMINAL_V2.0_HYBRID</h1>
+        <div style="display: flex; gap: 20px;">
+            <div class="status-badge" id="health-status">HEALTH: --</div>
+            <div class="status-badge" id="updateIndicator">SYSTEM_ACTIVE</div>
+        </div>
+    </div>
+
+    <!-- NEW: Performance Scorecard Row -->
+    <div class="stats-bar" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 5px; border-bottom: none;">
+        <div class="stat-card">
+            <div class="stat-label">SHARPE_RATIO</div>
+            <div class="stat-value neutral" id="statSharpe">0.00</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">PROFIT_FACTOR</div>
+            <div class="stat-value neutral" id="statProfitFactor">0.00</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">MAX_DRAWDOWN</div>
+            <div class="stat-value negative" id="statDrawdown">$0.00</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">HEALTH_SCORE</div>
+            <div class="stat-value positive" id="statHealth">--</div>
+        </div>
+    </div>
+
+    <!-- Existing Stats Row (slightly modified) -->
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-label">CUMULATIVE_PNL</div>
+            <div class="stat-value positive" id="statPnL">$0.00</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">TOTAL_TRADES</div>
+            <div class="stat-value neutral" id="statTrades">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">WIN_RATE</div>
+            <div class="stat-value neutral" id="statWinRate">0.0%</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">ENTROPY</div>
+            <div class="stat-value alert" id="statEntropy">0.000</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">AVG_HOLD_TIME</div>
+            <div class="stat-value neutral" id="statHoldTime">0s</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">LONG/SHORT</div>
+            <div class="stat-value neutral" id="statLongShort">--/--</div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <!-- Row 1 -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <span class="chart-title">PNL_GROWTH</span>
+                <span class="chart-value" id="valPnL">--</span>
+            </div>
+            <div class="chart-container"><canvas id="chartPnL"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-header">
+                <span class="chart-title">POLICY_LOSS</span>
+                <span class="chart-value" id="valPolicy">--</span>
+            </div>
+            <div class="chart-container"><canvas id="chartPolicyLoss"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-header">
+                <span class="chart-title">VALUE_LOSS</span>
+                <span class="chart-value" id="valValue">--</span>
+            </div>
+            <div class="chart-container"><canvas id="chartValueLoss"></canvas></div>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <span class="chart-title">ENTROPY</span>
+                <span class="chart-value" id="valEntropy">--</span>
+            </div>
+            <div class="chart-container"><canvas id="chartEntropy"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-header">
+                <span class="chart-title">WIN_RATE_TREND</span>
+                <span class="chart-value" id="valWinRate">--</span>
+            </div>
+            <div class="chart-container"><canvas id="chartWinRate"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-header">
+                <span class="chart-title">KL_DIVERGENCE</span>
+                <span class="chart-value" id="valKL">--</span>
+            </div>
+            <div class="chart-container"><canvas id="chartKL"></canvas></div>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <span class="chart-title">TRADES_BY_ASSET</span>
+                <span class="chart-value" id="valTrades">--</span>
+            </div>
+            <div class="chart-container"><canvas id="chartAssetCounts"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-header">
+                <span class="chart-title">PNL_DISTRIBUTION</span>
+                <span class="chart-value">FREQ</span>
+            </div>
+            <div class="chart-container"><canvas id="chartPnLDist"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-header">
+                <span class="chart-title">ASSET_PNL</span>
+                <span class="chart-value">USD</span>
+            </div>
+            <div class="chart-container"><canvas id="chartPnLByAsset"></canvas></div>
+        </div>
+
+        <!-- Row 4 -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <span class="chart-title">DURATION_DIST</span>
+                <span class="chart-value">SEC</span>
+            </div>
+            <div class="chart-container"><canvas id="chartDuration"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-header">
+                <span class="chart-title">CLIP_FRACTION</span>
+                <span class="chart-value" id="valClip">--</span>
+            </div>
+            <div class="chart-container"><canvas id="chartClip"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-header">
+                <span class="chart-title">ROLLING_PNL (50)</span>
+                <span class="chart-value" id="valRolling">--</span>
+            </div>
+            <div class="chart-container"><canvas id="chartRolling"></canvas></div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const REFRESH_RATE = 2000;
+
+        // Professional Palette
+        const COLORS = {
+            green: '#00ff00',
+            blue: '#00ccff',
+            red: '#ff0000',
+            orange: '#ff9500',
+            grey: '#333333',
+            dark: '#111111',
+            text: '#888888'
+        };
+
+        // --- CHART SETUP ---
+        Chart.defaults.color = COLORS.text;
+        Chart.defaults.borderColor = '#1a1a1a';
+        Chart.defaults.font.family = "'Consolas', 'Monaco', monospace";
+        Chart.defaults.font.size = 10;
+
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#000',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#333',
+                    borderWidth: 1,
+                    cornerRadius: 0,
+                    displayColors: false,
+                    intersect: false,
+                    mode: 'index'
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: '#1a1a1a', drawBorder: false },
+                    ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 6 }
+                },
+                y: {
+                    grid: { color: '#1a1a1a', drawBorder: false },
+                    position: 'right'
+                }
+            },
+            elements: {
+                line: { borderWidth: 1, tension: 0 },
+                point: { radius: 0, hoverRadius: 3 }
+            }
+        };
+
+        let charts = {};
+
+        function initCharts() {
+            // Line Charts
+            const createLine = (id, color) => new Chart(document.getElementById(id), {
+                type: 'line',
+                data: { labels: [], datasets: [{ borderColor: color, data: [] }] },
+                options: commonOptions
+            });
+
+            // Bar Charts
+            const createBar = (id, color) => new Chart(document.getElementById(id), {
+                type: 'bar',
+                data: { labels: [], datasets: [{ backgroundColor: color, data: [] }] },
+                options: commonOptions
+            });
+
+            charts.pnl = createLine('chartPnL', COLORS.green);
+            charts.policyLoss = createLine('chartPolicyLoss', COLORS.blue);
+            charts.valueLoss = createBar('chartValueLoss', COLORS.orange);
+            charts.entropy = createLine('chartEntropy', COLORS.orange);
+            charts.winRate = createLine('chartWinRate', COLORS.blue);
+            charts.kl = createBar('chartKL', COLORS.green);
+            charts.assetCounts = createBar('chartAssetCounts', COLORS.blue);
+            charts.pnlDist = createBar('chartPnLDist', COLORS.green);
+            charts.pnlByAsset = new Chart(document.getElementById('chartPnLByAsset'), {
+                type: 'bar',
+                data: { labels: [], datasets: [{ backgroundColor: [], data: [] }] },
+                options: { ...commonOptions, indexAxis: 'y' }
+            });
+            charts.duration = createBar('chartDuration', COLORS.blue);
+            charts.clip = createLine('chartClip', COLORS.red);
+            charts.rolling = createLine('chartRolling', COLORS.green);
+        }
+
+        // --- DATA UPDATES ---
+        async function updateDashboard() {
+            const indicator = document.getElementById('updateIndicator');
+            indicator.classList.add('updating');
+
+            try {
+                // Fetch new V2 endpoints for richer data
+                const [updates, trades, performance, behavior] = await Promise.all([
+                    fetch('/api/updates').then(r => r.json()),
+                    fetch('/api/trades').then(r => r.json()),
+                    fetch('/api/performance').then(r => r.json()),
+                    fetch('/api/behavior').then(r => r.json())
+                ]);
+
+                // 1. PERFORMANCE / SCORECARD
+                if (performance && performance.net_pnl !== undefined) {
+                    const pnl = performance.net_pnl;
+                    const pnlEl = document.getElementById('statPnL');
+                    pnlEl.textContent = (pnl >= 0 ? '+' : '') + pnl.toFixed(2);
+                    pnlEl.className = 'stat-value ' + (pnl >= 0 ? 'positive' : 'negative');
+
+                    document.getElementById('statTrades').textContent = performance.total_trades;
+                    document.getElementById('statWinRate').textContent = performance.win_rate.toFixed(1) + '%';
+
+                    document.getElementById('statSharpe').textContent = performance.sharpe.toFixed(2);
+                    document.getElementById('statProfitFactor').textContent = performance.profit_factor.toFixed(2);
+                    document.getElementById('statDrawdown').textContent = '$' + performance.max_drawdown.toFixed(2);
+                    document.getElementById('statHealth').textContent = performance.health_score + '/100';
+                    document.getElementById('health-status').textContent = 'HEALTH: ' + performance.health_status.toUpperCase();
+                }
+
+                // 2. BEHAVIOR
+                if (behavior && behavior.avg_holding_time !== undefined) {
+                    document.getElementById('statHoldTime').textContent = behavior.avg_holding_time.toFixed(1) + 's';
+                    document.getElementById('statLongShort').textContent = behavior.long_percentage + '/' + behavior.short_percentage;
+                }
+
+                // 3. STATS (Entropy fallback if stats endpoint skipped)
+                if (updates.entropy && updates.entropy.length > 0) {
+                    const lastEnt = updates.entropy[updates.entropy.length - 1];
+                    document.getElementById('statEntropy').textContent = lastEnt.toFixed(3);
+                }
+
+                // Chart Updates
+                if (updates.update_nums) {
+                    const updateLine = (chart, data) => {
+                        chart.data.labels = updates.update_nums;
+                        chart.data.datasets[0].data = data;
+                        chart.update('none');
+                    };
+
+                    updateLine(charts.pnl, updates.cumulative_pnl);
+                    updateLine(charts.policyLoss, updates.policy_loss);
+                    updateLine(charts.valueLoss, updates.value_loss);
+                    updateLine(charts.entropy, updates.entropy);
+                    updateLine(charts.winRate, updates.cumulative_win_rate);
+                    updateLine(charts.kl, updates.approx_kl);
+                    updateLine(charts.clip, updates.clip_fraction);
+
+                    // Update Header Values
+                    document.getElementById('valPnL').textContent = updates.cumulative_pnl.slice(-1)[0]?.toFixed(1) || '--';
+                    document.getElementById('valEntropy').textContent = updates.entropy.slice(-1)[0]?.toFixed(3) || '--';
+                }
+
+                if (trades.total_trades) {
+                    // Trades by Asset
+                    if (trades.asset_counts) {
+                        charts.assetCounts.data.labels = Object.keys(trades.asset_counts);
+                        charts.assetCounts.data.datasets[0].data = Object.values(trades.asset_counts);
+                        charts.assetCounts.update('none');
+                    }
+
+                    // PnL by Asset
+                    if (trades.pnl_by_asset) {
+                        const assets = Object.keys(trades.pnl_by_asset);
+                        const vals = Object.values(trades.pnl_by_asset);
+                        charts.pnlByAsset.data.labels = assets;
+                        charts.pnlByAsset.data.datasets[0].data = vals;
+                        charts.pnlByAsset.data.datasets[0].backgroundColor = vals.map(v => v >= 0 ? COLORS.green : COLORS.red);
+                        charts.pnlByAsset.update('none');
+                    }
+
+                    // Rolling PnL
+                    if (trades.rolling_pnl) {
+                        charts.rolling.data.labels = trades.rolling_idx;
+                        charts.rolling.data.datasets[0].data = trades.rolling_pnl;
+                        charts.rolling.update('none');
+                    }
+
+                    // Distributions
+                    if (trades.pnl_values && trades.pnl_values.length) {
+                        const pnlVals = trades.pnl_values;
+                        const bins = 20;
+                        const min = Math.min(...pnlVals);
+                        const max = Math.max(...pnlVals);
+                        const step = (max - min) / bins || 1;
+                        const counts = new Array(bins).fill(0);
+                        pnlVals.forEach(v => counts[Math.min(Math.floor((v - min) / step), bins - 1)]++);
+                        charts.pnlDist.data.labels = new Array(bins).fill('').map((_, i) => (min + i * step).toFixed(0));
+                        charts.pnlDist.data.datasets[0].data = counts;
+                        charts.pnlDist.update('none');
+                    }
+
+                    if (trades.durations && trades.durations.length) {
+                        const dVals = trades.durations;
+                        const bins = 15;
+                        const maxD = Math.max(...dVals);
+                        const step = maxD / bins || 1;
+                        const counts = new Array(bins).fill(0);
+                        dVals.forEach(v => counts[Math.min(Math.floor(v / step), bins - 1)]++);
+                        charts.duration.data.labels = new Array(bins).fill('').map((_, i) => (i * step).toFixed(0) + 's');
+                        charts.duration.data.datasets[0].data = counts;
+                        charts.duration.update('none');
+                    }
+                }
+
+            } catch (e) { console.error(e); }
+
+            setTimeout(() => indicator.classList.remove('updating'), 200);
+        }
+
+        initCharts();
+        setInterval(updateDashboard, REFRESH_RATE);
+        updateDashboard();
+    </script>
+</body>
+
+</html>

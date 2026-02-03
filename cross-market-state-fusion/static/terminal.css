@@ -1,0 +1,176 @@
+/* RL Training Terminal V2.0 Styles */
+:root {
+    --bg-color: #0b0e11;
+    --panel-bg: #151a21;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent-green: #238636;
+    --accent-green-bright: #3fb950;
+    --accent-red: #da3633;
+    --accent-blue: #58a6ff;
+    --border-color: #30363d;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    height: 100vh;
+    box-sizing: border-box;
+    overflow: hidden; /* Full screen feel */
+}
+
+h1, h2, h3, h4 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.terminal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.brand {
+    font-family: var(--font-mono);
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    color: var(--text-secondary);
+}
+
+.brand span {
+    color: var(--text-primary);
+    font-weight: bold;
+}
+
+.status-badge {
+    background: var(--accent-green);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: 300px 1fr 300px; /* Left Sidebar, Main Charts, Right Sidebar */
+    grid-template-rows: 140px 1fr 1fr; /* Height rows */
+    gap: 15px;
+    height: calc(100vh - 80px);
+}
+
+.panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.panel-header {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Specific Panel Locations */
+.scorecard-panel { grid-column: 1 / 2; grid-row: 1 / 2; }
+.health-panel { grid-column: 2 / 3; grid-row: 1 / 2; }
+.live-status-panel { grid-column: 3 / 4; grid-row: 1 / 2; }
+
+.chart-row-1-left { grid-column: 1 / 3; grid-row: 2 / 3; }
+.chart-row-1-right { grid-column: 3 / 4; grid-row: 2 / 3; } /* Trading Behavior */
+
+.chart-row-2-left { grid-column: 1 / 3; grid-row: 3 / 4; }
+.chart-row-2-right { grid-column: 3 / 4; grid-row: 3 / 4; } /* Diagnostics/Logs */
+
+/* Scorecard Metrics */
+.score-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.metric-item {
+    display: flex;
+    flex-direction: column;
+}
+.metric-label { font-size: 0.75rem; color: var(--text-secondary); }
+.metric-value { font-size: 1.2rem; font-weight: bold; font-family: var(--font-mono); }
+.positive { color: var(--accent-green-bright); }
+.negative { color: var(--accent-red); }
+
+/* Health Bar */
+.health-display {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    height: 100%;
+}
+.big-score {
+    font-size: 3rem;
+    font-weight: bold;
+    color: var(--accent-green-bright);
+    font-family: var(--font-mono);
+}
+.health-details { flex-grow: 1; }
+.progress-bar {
+    background: #30363d;
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+.progress-fill {
+    height: 100%;
+    background: var(--accent-green-bright);
+    width: 0%;
+    transition: width 1s ease;
+}
+
+/* Charts */
+.chart-container {
+    flex-grow: 1;
+    min-height: 0; /* Important for flex/grid nesting */
+}
+
+/* Behavior Panel */
+.behavior-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.donut-chart-container {
+    height: 150px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.behavior-stats {
+    font-size: 0.9rem;
+    font-family: var(--font-mono);
+}
+
+/* Utility */
+.blink { animation: blinker 2s linear infinite; }
+@keyframes blinker { 50% { opacity: 0.5; } }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-color); }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }

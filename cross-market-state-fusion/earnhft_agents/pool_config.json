@@ -1,0 +1,27 @@
+{
+  "trending_up": {
+    "beta": 0.7,
+    "path": "earnhft_agents\\agent_beta_0.7",
+    "score": 0.0
+  },
+  "trending_down": {
+    "beta": 0.7,
+    "path": "earnhft_agents\\agent_beta_0.7",
+    "score": 0.0
+  },
+  "high_volatility": {
+    "beta": 0.3,
+    "path": "earnhft_agents\\agent_beta_0.3",
+    "score": 0.0
+  },
+  "low_volatility": {
+    "beta": 0.5,
+    "path": "earnhft_agents\\agent_beta_0.5",
+    "score": 0.0
+  },
+  "ranging": {
+    "beta": 0.3,
+    "path": "earnhft_agents\\agent_beta_0.3",
+    "score": 0.0
+  }
+}

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RL Training Terminal V2.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/terminal.css">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body>
+    <div class="terminal-header">
+        <div class="brand">
+            RL TRAINING <span>TERMINAL V2.0</span>
+        </div>
+        <div>
+            <span class="status-badge blink">TRAINING ACTIVE</span>
+            <span style="margin-left: 15px; color: var(--text-secondary); font-size: 0.9rem;" id="last-update">Last
+                update: Just now</span>
+        </div>
+        <div style="font-family: var(--font-mono); color: var(--text-secondary); font-size: 0.9rem;">
+            AEGIS v1 Model
+        </div>
+    </div>
+
+    <div class="grid-container">
+        <!-- Panel 1: Performance Scorecard -->
+        <div class="panel scorecard-panel">
+            <div class="panel-header">
+                <span>Performance Scorecard</span>
+                <i style="font-size: 0.8rem;">LIVE</i>
+            </div>
+            <div class="score-grid">
+                <div class="metric-item">
+                    <span class="metric-label">Net PnL (USD)</span>
+                    <span class="metric-value" id="net-pnl">--</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Sharpe Ratio</span>
+                    <span class="metric-value" id="sharpe-ratio">--</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Max Drawdown</span>
+                    <span class="metric-value negative" id="max-drawdown">--</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Profit Factor</span>
+                    <span class="metric-value" id="profit-factor">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 2: Agent Health -->
+        <div class="panel health-panel">
+            <div class="panel-header">
+                <span>Agent Health</span>
+                <span id="health-status-text" style="color: var(--accent-green-bright);">Stable Learning</span>
+            </div>
+            <div class="health-display">
+                <div class="big-score" id="health-score">--</div>
+                <div class="health-details">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px;">
+                        <span>Health Index</span>
+                        <span style="color: var(--text-secondary);">Target: 100</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="health-bar" style="width: 0%;"></div>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
+                        Based on Entropy, Win Rate & KL Div
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 3: Live Status -->
+        <div class="panel live-status-panel">
+            <div class="panel-header">
+                <span>Live Status</span>
+                <span>Active</span>
+            </div>
+            <div style="display: flex; flex-direction: column; justify-content: center; height: 100%; gap: 10px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">Environment</span>
+                    <span style="font-weight: bold;">Crypto 15m</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">Total Ep.</span>
+                    <span style="font-weight: bold;" id="total-updates">--</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">Trades</span>
+                    <span style="font-weight: bold;" id="total-trades">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 4: Main Charts (Loss/Entropy/KL) -->
+        <div class="panel chart-row-1-left">
+            <div class="panel-header">
+                <span>Learning Stability (Policy Loss & Entropy)</span>
+                <span>
+                    Current Entropy: <span id="current-entropy" style="color: var(--accent-blue);">--</span>
+                </span>
+            </div>
+            <div id="loss-chart" class="chart-container"></div>
+        </div>
+
+        <!-- Panel 5: Trading Behavior -->
+        <div class="panel chart-row-1-right">
+            <div class="panel-header">
+                <span>Trading Behavior</span>
+            </div>
+            <div class="behavior-metrics">
+                <div>
+                    <span class="metric-label">Avg Holding Time</span>
+                    <div class="metric-value" style="font-size: 1rem;" id="avg-holding">--s</div>
+                </div>
+                <div>
+                    <span class="metric-label">Long / Short Ratio</span>
+                    <div class="progress-bar" style="background: var(--accent-red);">
+                        <div class="progress-fill" id="long-short-bar"
+                            style="background: var(--accent-green); width: 50%;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 3px;">
+                        <span style="color: var(--accent-green);">LONG <span id="long-pct">--</span>%</span>
+                        <span style="color: var(--accent-red);">SHORT <span id="short-pct">--</span>%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 6: Capital Curve -->
+        <div class="panel chart-row-2-left">
+            <div class="panel-header">
+                <span>Capital Curve (Cumulative PnL)</span>
+                <span id="pnl-header-val">--</span>
+            </div>
+            <div id="pnl-chart" class="chart-container"></div>
+        </div>
+
+        <!-- Panel 7: Recent Trades Table -->
+        <div class="panel chart-row-2-right">
+            <div class="panel-header">
+                <span>Recent Trades</span>
+            </div>
+            <div style="overflow-y: auto; font-family: var(--font-mono); font-size: 0.8rem; height: 100%;">
+                <table style="width: 100%; text-align: left; border-collapse: collapse;">
+                    <thead>
+                        <tr style="color: var(--text-secondary); border-bottom: 1px solid var(--border-color);">
+                            <th style="padding: 5px;">Time</th>
+                            <th>Pair</th>
+                            <th>PnL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trades-table-body">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/terminal.js"></script>
+</body>
+
+</html>
